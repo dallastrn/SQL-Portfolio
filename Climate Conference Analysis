@@ -167,29 +167,44 @@ FROM hotels
 WHERE hotels.hotel_name LIKE 'Four%'
 ORDER BY vips.member_id;
 
---#4 List the hotel and hotel address for each VIP who is presenting at event 5.
-SELECT vips.member_id
-	, vips.last_name
-    , hotels.hotel_name
-    , hotels.address
+--#4 Show the number and percentage of VIPs attending each event, ordered by event
+SELECT events.event_name
+	, COUNT(vips.member_id) AS vip_count
+    , ROUND(
+      	COUNT(vips.member_id) * 100 / (SELECT COUNT(*) FROM vips), 2
+    ) AS percentage_of_vips
 FROM events
 	LEFT JOIN vips ON events.event_id = vips.event
-    	LEFT JOIN reservations ON vips.member_id = reservations.member_id
-        	LEFT JOIN hotels ON reservations.hotel = hotels.hotel_id
-WHERE event_id = 5;
+GROUP BY events.event_id
+ORDER BY events.event_id;
 
---#5 List each VIP with a dinner reservation and the hotel they are staying at, ordered by hotel.
+--#5 List which hotels each VIP presenting at event 4 is staying at, and show how many VIPs are staying at each hotel, the total number and the percentage of VIPs attending
+SELECT hotels.hotel_name
+    , COUNT(DISTINCT reservations.member_id) AS vip_count
+    , (SELECT COUNT(*) FROM vips WHERE event = 4) AS total_vips
+    , ROUND(
+        COUNT(DISTINCT reservations.member_id) * 100.0 / 
+        (SELECT COUNT(*) FROM vips WHERE event = 4), 2
+    ) AS percentage_of_vips
+FROM vips
+	LEFT JOIN reservations ON vips.member_id = reservations.member_id
+		LEFT JOIN hotels ON reservations.hotel = hotels.hotel_id
+WHERE vips.event = 4
+GROUP BY hotels.hotel_name;
+
+
+--#6 List each VIP with a dinner reservation and the hotel they are staying at, ordered by hotel.
 SELECT vips.last_name
 	, vips.first_name
     , hotels.hotel_name
     , hotels.address
 FROM vips
-	JOIN reservations ON vips.member_id = reservations.member_id
-    	JOIN hotels ON reservations.hotel = hotels.hotel_id
+	INNER JOIN reservations ON vips.member_id = reservations.member_id
+    	INNER JOIN hotels ON reservations.hotel = hotels.hotel_id
 WHERE reservations.dinner_rsvp = 1
 ORDER BY hotel_id;
 
---#6 List each government associated VIP and the conference they are presenting at, ordered by the most to least recent member.
+--#7 List each government associated VIP and the conference they are presenting at, ordered by the most to least recent member.
 SELECT vips.member_id
 	, vips.last_name
     , vips.association
